@@ -1,5 +1,6 @@
 package com.nearfix.nearfix.controller;
 
+import com.nearfix.nearfix.dto.AuthResponse;
 import com.nearfix.nearfix.entity.User;
 import com.nearfix.nearfix.service.AuthService;
 import com.nearfix.nearfix.service.OtpService;
@@ -31,6 +32,7 @@ public class OtpController {
             return ResponseEntity.badRequest().body("Invalid or Expired OTP");
         }
         User user = authService.loginOrRegister(phoneNumber);
-        return ResponseEntity.ok("OTP verified");
+        String token=authService.generateToken(user);
+        return ResponseEntity.ok(new AuthResponse(token,user.getPhoneNumber(),user.getRole().name()));
     }
 }
