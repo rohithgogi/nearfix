@@ -12,6 +12,18 @@ import org.springframework.stereotype.Service;
 public class AuthService {
     private final JwtTokenProvider jwtTokenProvider;
     private final UserRepository userRepository;
+
+    public User findUserByPhone(String phoneNumber)
+    {
+        return userRepository.findByPhoneNumber(phoneNumber).orElse(null);
+    }
+    public User registerUser(String phoneNumber,UserRole role){
+        User newUser=new User();
+        newUser.setPhoneNumber(phoneNumber);
+        newUser.setRole(role);
+        newUser.setPhoneVerified(true);
+        return userRepository.save(newUser);
+    }
     public User loginOrRegister(String phoneNumber){
         return userRepository.findByPhoneNumber(phoneNumber)
                 .orElseGet(()->{

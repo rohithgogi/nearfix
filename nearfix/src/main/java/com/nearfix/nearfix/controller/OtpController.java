@@ -1,7 +1,9 @@
 package com.nearfix.nearfix.controller;
 
 import com.nearfix.nearfix.dto.AuthResponse;
+import com.nearfix.nearfix.dto.OtpResponseVerify;
 import com.nearfix.nearfix.entity.User;
+import com.nearfix.nearfix.entity.UserRole;
 import com.nearfix.nearfix.service.AuthService;
 import com.nearfix.nearfix.service.OtpService;
 import lombok.RequiredArgsConstructor;
@@ -31,8 +33,42 @@ public class OtpController {
         if(!isValid){
             return ResponseEntity.badRequest().body("Invalid or Expired OTP");
         }
-        User user = authService.loginOrRegister(phoneNumber);
-        String token=authService.generateToken(user);
-        return ResponseEntity.ok(new AuthResponse(token,user.getPhoneNumber(),user.getRole().name()));
+        User existingUser=authService.findUserByPhone(phoneNumber);
+        if(existingUser!=null){
+            String token=authService.generateToken(existingUser);
+            return ResponseEntity.ok(new AuthResponse(token,
+                    existingUser.getPhoneNumber(),
+                    existingUser.getRole().name()));
+        }else{
+            return ResponseEntity.ok(new OtpResponseVerify(true,
+                    phoneNumber,
+                    null,
+                    null));
+        }
+
+    }
+    @PostMapping("/register-with-role")
+    public ResponseEntity<?> registerWithRole(@RequestParam String phoneNumber,
+                                              @RequestParam String role){
+        // Validate role
+        UserRole userRole;
+        try {
+            userRole = UserRole.valueOf(role.toUpperCase());
+            if(userRole == UserRole.ADMIN) {
+                return ResponseEntity.badRequest().body("Cannot register as ADMIN");
+            }
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body("Invalid role. Use CUSTOMER or PROVIDER");
+        }
+
+        // Register new user
+        User newUser = authService.registerUser(phoneNumber, userRole);
+        String token = authService.generateToken(newUser);
+
+        return ResponseEntity.ok(new AuthResponse(
+                token,
+                newUser.getPhoneNumber(),
+                newUser.getRole().name()
+        ));
     }
 }

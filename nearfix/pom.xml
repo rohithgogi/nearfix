@@ -102,6 +102,17 @@
 			<version>0.11.5</version>
 			<scope>runtime</scope>
 		</dependency>
+		<!-- AWS SDK for SNS -->
+		<dependency>
+			<groupId>software.amazon.awssdk</groupId>
+			<artifactId>sns</artifactId>
+		</dependency>
+
+		<!-- AWS SDK Core -->
+		<dependency>
+			<groupId>software.amazon.awssdk</groupId>
+			<artifactId>auth</artifactId>
+		</dependency>
 	</dependencies>
 
 	<build>
