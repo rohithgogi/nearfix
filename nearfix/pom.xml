@@ -79,10 +79,7 @@
 			<artifactId>spring-security-test</artifactId>
 			<scope>test</scope>
 		</dependency>
-		<dependency>
-			<groupId>software.amazon.awssdk</groupId>
-			<artifactId>sns</artifactId>
-		</dependency>
+
 
 		<!-- JJWT -->
 		<dependency>
@@ -108,11 +105,7 @@
 			<artifactId>sns</artifactId>
 		</dependency>
 
-		<!-- AWS SDK Core -->
-		<dependency>
-			<groupId>software.amazon.awssdk</groupId>
-			<artifactId>auth</artifactId>
-		</dependency>
+
 	</dependencies>
 
 	<build>
