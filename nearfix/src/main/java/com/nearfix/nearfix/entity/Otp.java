@@ -25,5 +25,10 @@ public class Otp {
 
     private LocalDateTime expiresAt;
 
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean verified=false;
+
+    private LocalDateTime verifiedAt;
 
 }

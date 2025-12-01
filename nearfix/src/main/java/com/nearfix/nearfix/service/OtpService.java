@@ -22,6 +22,7 @@ public class OtpService {
                  .phoneNumber(phoneNumber)
                  .otpCode(code)
                  .expiresAt(LocalDateTime.now().plusMinutes(5))
+                 .verified(false)
                  .build();
 
          otpRepository.save(otp);
@@ -39,7 +40,17 @@ public class OtpService {
 
      public boolean verifyOtp(String phoneNumber,String otpCode){
          return otpRepository.findTopByPhoneNumberOrderByExpiresAtDesc(phoneNumber)
-                 .filter(o->o.getOtpCode().equals(otpCode) && o.getExpiresAt().isAfter(LocalDateTime.now()))
-                 .isPresent();
+                 .filter(o-> !o.getVerified() && o.getOtpCode().equals(otpCode) && o.getExpiresAt().isAfter(LocalDateTime.now()))
+                 .map(otp -> {
+                     otp.setVerified(true);
+                     otp.setVerifiedAt(LocalDateTime.now());
+                     otpRepository.save(otp);
+                     log.info("OTP Verified successfully for {}", phoneNumber);
+                     return true;
+                 })
+                 .orElseGet(()->{
+                     log.warn("OTP verification failed for {}", phoneNumber);
+                     return false;
+                 });
      }
 }
