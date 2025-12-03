@@ -3,10 +3,7 @@ package com.nearfix.nearfix.service;
 import com.nearfix.nearfix.dto.AddProviderServiceRequest;
 import com.nearfix.nearfix.dto.ProviderServiceDTO;
 import com.nearfix.nearfix.dto.UpdateProviderServiceRequest;
-import com.nearfix.nearfix.entity.Provider;
-import com.nearfix.nearfix.entity.ProviderService;
-import com.nearfix.nearfix.entity.Service;
-import com.nearfix.nearfix.entity.User;
+import com.nearfix.nearfix.entity.*;
 import com.nearfix.nearfix.repository.ProviderRepository;
 import com.nearfix.nearfix.repository.ProviderServiceRepository;
 import com.nearfix.nearfix.repository.ServiceRepository;
@@ -117,11 +114,17 @@ public class ProviderServiceService {
     public Provider findProviderByPhone(String phoneNumber){
         User user=userRepository.findByPhoneNumber(phoneNumber)
                 .orElseThrow(()-> new RuntimeException("User not found"));
+
         return providerRepository.findByUserId(user.getId())
                 .orElseGet(()->{
+                    log.info("Creating new Provider record for user: {}", phoneNumber);
                     Provider newProvider=new Provider();
                     newProvider.setUser(user);
-                    return providerRepository.save(newProvider);
+                    newProvider.setAvailabilityStatus(AvailabilityStatus.OFFLINE);
+                    newProvider.setVerified(false);
+                    Provider saved = providerRepository.save(newProvider);
+                    log.info("Provider created with ID: {}", saved.getId());
+                    return saved;
                 });
     }
 
