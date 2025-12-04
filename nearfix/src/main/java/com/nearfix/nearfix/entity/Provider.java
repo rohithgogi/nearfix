@@ -14,7 +14,11 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "providers")
+@Table(name = "providers", indexes = {
+        @Index(name = "idx_verified_available", columnList = "verified,availability_status"),
+        @Index(name = "idx_location", columnList = "latitude,longitude"),
+        @Index(name = "idx_profile_completed", columnList = "profile_completed")
+})
 public class Provider {
 
     @Id
@@ -61,6 +65,16 @@ public class Provider {
 
     @Column(nullable = false)
     private Boolean profileCompleted = false;
+
+    // Rating and Stats (NEW FIELDS)
+    @Column(precision = 3, scale = 2)
+    private BigDecimal rating = BigDecimal.ZERO;
+
+    @Column(nullable = false)
+    private Integer totalReviews = 0;
+
+    @Column(nullable = false)
+    private Integer totalBookings = 0;
 
     // Legacy fields
     private Integer experienceYears;
