@@ -20,7 +20,7 @@ public class CorsConfig {
         config.setAllowedOrigins(Arrays.asList("http://localhost:5174"));
         config.setAllowedHeaders(Arrays.asList("*"));
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-
+        config.setMaxAge(3600L);
         source.registerCorsConfiguration("/**", config);
         return new CorsFilter(source);
     }

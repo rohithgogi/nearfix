@@ -20,7 +20,9 @@ import java.util.Map;
 @RequestMapping("/api/provider/services")
 @RequiredArgsConstructor
 @Slf4j
-@CrossOrigin("http://localhost:5174")
+@CrossOrigin(origins = "http://localhost:5174",
+        allowedHeaders = "*",
+        methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE})
 public class ProviderServiceController {
     private final ProviderServiceService providerServiceService;
     private final JwtTokenProvider jwtTokenProvider;

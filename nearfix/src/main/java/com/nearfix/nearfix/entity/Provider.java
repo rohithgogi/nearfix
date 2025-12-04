@@ -4,6 +4,11 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Entity
 @Data
@@ -20,13 +25,94 @@ public class Provider {
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
 
+    // Legacy field - keep for backward compatibility
     private String serviceType;
 
-    private int experienceYears;
+    // Profile Information
+    private String businessName;
+
+    @Column(columnDefinition = "TEXT")
+    private String address;
+
+    private String city;
+    private String pincode;
+
+    @Column(precision = 10, scale = 8)
+    private BigDecimal latitude;
+
+    @Column(precision = 11, scale = 8)
+    private BigDecimal longitude;
+
+    @Column(length = 500)
+    private String photoUrl;
+
+    @Column(length = 500)
+    private String aadharUrl;
+
+    @Column(columnDefinition = "JSON")
+    private String workingHours;  // Store as JSON string
+
+    @Column(columnDefinition = "TEXT")
+    private String bio;
 
     @Enumerated(EnumType.STRING)
-    private AvailabilityStatus availabilityStatus=AvailabilityStatus.OFFLINE;
+    @Column(length = 20)
+    private VerificationStatus verificationStatus = VerificationStatus.PENDING;
 
-    private  Boolean verified=false;
+    @Column(nullable = false)
+    private Boolean profileCompleted = false;
 
+    // Legacy fields
+    private Integer experienceYears;
+
+    @Enumerated(EnumType.STRING)
+    private AvailabilityStatus availabilityStatus = AvailabilityStatus.OFFLINE;
+
+    private Boolean verified = false;
+
+    @CreationTimestamp
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    private LocalDateTime updatedAt;
+
+    // Helper method to calculate profile completion
+    public int getProfileCompletionPercentage() {
+        int total = 0;
+        int completed = 0;
+
+        // Business Name (20%)
+        total += 20;
+        if (businessName != null && !businessName.trim().isEmpty()) {
+            completed += 20;
+        }
+
+        // Address & Location (20%)
+        total += 20;
+        if (address != null && !address.trim().isEmpty() &&
+                city != null && pincode != null &&
+                latitude != null && longitude != null) {
+            completed += 20;
+        }
+
+        // Photo (20%)
+        total += 20;
+        if (photoUrl != null && !photoUrl.trim().isEmpty()) {
+            completed += 20;
+        }
+
+        // Documents (20%)
+        total += 20;
+        if (aadharUrl != null && !aadharUrl.trim().isEmpty()) {
+            completed += 20;
+        }
+
+        // Working Hours (20%)
+        total += 20;
+        if (workingHours != null && !workingHours.trim().isEmpty()) {
+            completed += 20;
+        }
+
+        return (total == 0) ? 0 : (completed * 100 / total);
+    }
 }
