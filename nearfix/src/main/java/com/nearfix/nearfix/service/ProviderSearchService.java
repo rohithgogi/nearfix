@@ -18,8 +18,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import static org.springframework.data.jpa.repository.query.QueryUtils.applySorting;
-
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -28,43 +26,80 @@ public class ProviderSearchService {
     private final ProviderServiceRepository providerServiceRepository;
 
     public List<ProviderSearchResultDTO> searchProviders(ProviderSearchRequest request){
-        log.info("Searching providers for service {} at ({}, {}) within {} km",
+        log.info("🔍 Searching providers - Service: {}, Location: ({}, {}), Radius: {} km",
                 request.getServiceId(), request.getLatitude(), request.getLongitude(), request.getRadiusKm());
 
-        List<Provider> nearbyProviders=providerRepository.findNearbyProviders(
-                request.getLatitude(),
-                request.getLongitude(),
-                request.getRadiusKm(),
-                request.getServiceId()
-        );
-        log.info("Found {} nearby providers", nearbyProviders.size());
+        // Validate inputs
+        if (request.getLatitude() == null || request.getLongitude() == null) {
+            log.error("❌ Invalid location: lat={}, lng={}", request.getLatitude(), request.getLongitude());
+            throw new RuntimeException("Location coordinates are required");
+        }
 
-        List<ProviderSearchResultDTO> results = nearbyProviders.stream()
-                .map(provider -> {
-                    Double distance = calculateDistance(
-                            request.getLatitude(), request.getLongitude(),
-                            provider.getLatitude().doubleValue(), provider.getLongitude().doubleValue()
-                    );
-                    return buildSearchResult(provider, distance);
-                })
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+        if (request.getServiceId() == null) {
+            log.error("❌ Service ID is required");
+            throw new RuntimeException("Service ID is required");
+        }
 
-        // Apply filters
-        results = applyFilters(results, request);
+        try {
+            List<Provider> nearbyProviders = providerRepository.findNearbyProviders(
+                    request.getLatitude(),
+                    request.getLongitude(),
+                    request.getRadiusKm(),
+                    request.getServiceId()
+            );
 
-        // Apply sorting
-        results = applySorting(results, request);
+            log.info("✅ Found {} nearby providers", nearbyProviders.size());
 
-        log.info("Returning {} filtered and sorted results", results.size());
-        return results;
+            if (nearbyProviders.isEmpty()) {
+                log.warn("⚠️ No providers found. Checking total verified providers...");
+                List<Provider> allVerified = providerRepository.findAllVerifiedProviders();
+                log.info("📊 Total verified providers: {}", allVerified.size());
 
+                // Log sample provider data for debugging
+                if (!allVerified.isEmpty()) {
+                    Provider sample = allVerified.get(0);
+                    log.info("📍 Sample provider location: lat={}, lng={}, verified={}, profileCompleted={}, status={}",
+                            sample.getLatitude(), sample.getLongitude(),
+                            sample.getVerified(), sample.getProfileCompleted(),
+                            sample.getAvailabilityStatus());
+                }
+            }
+
+            List<ProviderSearchResultDTO> results = nearbyProviders.stream()
+                    .map(provider -> {
+                        try {
+                            Double distance = calculateDistance(
+                                    request.getLatitude(), request.getLongitude(),
+                                    provider.getLatitude().doubleValue(),
+                                    provider.getLongitude().doubleValue()
+                            );
+                            return buildSearchResult(provider, distance);
+                        } catch (Exception e) {
+                            log.error("❌ Error building result for provider {}: {}",
+                                    provider.getId(), e.getMessage());
+                            return null;
+                        }
+                    })
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+
+            // Apply filters
+            results = applyFilters(results, request);
+
+            // Apply sorting
+            results = applySorting(results, request);
+
+            log.info("✅ Returning {} filtered and sorted results", results.size());
+            return results;
+
+        } catch (Exception e) {
+            log.error("❌ Search failed: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to search providers: " + e.getMessage());
+        }
     }
 
-
-
     public ProviderDetailDTO getProviderDetail(Long providerId) {
-        log.info("Fetching provider detail for ID: {}", providerId);
+        log.info("📋 Fetching provider detail for ID: {}", providerId);
 
         Provider provider = providerRepository.findById(providerId)
                 .orElseThrow(() -> new RuntimeException("Provider not found"));
@@ -78,12 +113,14 @@ public class ProviderSearchService {
                 .findByProviderIdAndAvailableTrue(provider.getId());
 
         if (services.isEmpty()) {
-            return null; // Skip providers with no services
+            log.warn("⚠️ Provider {} has no available services", provider.getId());
+            return null;
         }
 
         // Get starting price (minimum price among all services)
         BigDecimal startingPrice = services.stream()
                 .map(ProviderService::getBasePrice)
+                .filter(Objects::nonNull)
                 .min(BigDecimal::compareTo)
                 .orElse(BigDecimal.ZERO);
 
@@ -101,9 +138,9 @@ public class ProviderSearchService {
                 .providerId(provider.getId())
                 .businessName(provider.getBusinessName())
                 .photoUrl(provider.getPhotoUrl())
-                .rating(provider.getRating())
-                .totalReviews(provider.getTotalReviews())
-                .distanceKm(Math.round(distance * 100.0) / 100.0) // Round to 2 decimals
+                .rating(provider.getRating() != null ? provider.getRating() : BigDecimal.ZERO)
+                .totalReviews(provider.getTotalReviews() != null ? provider.getTotalReviews() : 0)
+                .distanceKm(Math.round(distance * 100.0) / 100.0)
                 .startingPrice(startingPrice)
                 .servicesOffered(servicesOffered)
                 .address(provider.getAddress())
@@ -141,7 +178,7 @@ public class ProviderSearchService {
                 .workingHours(provider.getWorkingHours())
                 .verificationStatus(provider.getVerificationStatus())
                 .services(servicesOffered)
-                .recentReviews(new ArrayList<>()) // Placeholder
+                .recentReviews(new ArrayList<>())
                 .build();
     }
 
@@ -151,7 +188,6 @@ public class ProviderSearchService {
 
         return results.stream()
                 .filter(result -> {
-                    // Price filter
                     if (request.getMinPrice() != null &&
                             result.getStartingPrice().compareTo(request.getMinPrice()) < 0) {
                         return false;
@@ -160,13 +196,10 @@ public class ProviderSearchService {
                             result.getStartingPrice().compareTo(request.getMaxPrice()) > 0) {
                         return false;
                     }
-
-                    // Rating filter
                     if (request.getMinRating() != null &&
                             result.getRating().doubleValue() < request.getMinRating()) {
                         return false;
                     }
-
                     return true;
                 })
                 .collect(Collectors.toList());
@@ -199,7 +232,7 @@ public class ProviderSearchService {
                 .sorted(comparator)
                 .collect(Collectors.toList());
     }
-    // User Haversine formula
+
     private Double calculateDistance(Double lat1, Double lon1, Double lat2, Double lon2) {
         final int EARTH_RADIUS = 6371; // Radius in kilometers
 

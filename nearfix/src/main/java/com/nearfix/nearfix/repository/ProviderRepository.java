@@ -25,12 +25,16 @@ public interface ProviderRepository extends JpaRepository<Provider,Long> {
                     "AND p.availability_status = 'AVAILABLE' " +
                     "AND ps.service_id = :serviceId " +
                     "AND ps.available = true " +
-                    "AND (6371 * acos(cos(radians(:latitude)) * cos(radians(p.latitude)) * " +
+                    "AND p.latitude IS NOT NULL " +
+                    "AND p.longitude IS NOT NULL " +
+                    "AND (6371 * acos(GREATEST(-1, LEAST(1, " +
+                    "cos(radians(:latitude)) * cos(radians(p.latitude)) * " +
                     "cos(radians(p.longitude) - radians(:longitude)) + " +
-                    "sin(radians(:latitude)) * sin(radians(p.latitude)))) <= :radiusKm " +
-                    "ORDER BY (6371 * acos(cos(radians(:latitude)) * cos(radians(p.latitude)) * " +
+                    "sin(radians(:latitude)) * sin(radians(p.latitude)))))) <= :radiusKm " +
+                    "ORDER BY (6371 * acos(GREATEST(-1, LEAST(1, " +
+                    "cos(radians(:latitude)) * cos(radians(p.latitude)) * " +
                     "cos(radians(p.longitude) - radians(:longitude)) + " +
-                    "sin(radians(:latitude)) * sin(radians(p.latitude))))",
+                    "sin(radians(:latitude)) * sin(radians(p.latitude)))))",
             nativeQuery = true)
     List<Provider> findNearbyProviders(
             @Param("latitude") Double latitude,
