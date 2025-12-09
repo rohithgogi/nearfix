@@ -20,7 +20,7 @@ public class SecurityConfig {
                 .cors(cors -> cors.configure(http))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/otp/**",
-                        "/api/services/**", "/api/provider/services/**").permitAll()
+                        "/api/services/**", "/api/provider/services/**","/api/search/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

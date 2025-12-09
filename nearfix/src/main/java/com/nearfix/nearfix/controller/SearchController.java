@@ -16,7 +16,7 @@ import java.util.List;
 @RequestMapping("/api/search")
 @RequiredArgsConstructor
 @Slf4j
-@CrossOrigin(origins = "http://localhost:5174")
+@CrossOrigin(origins = "http://localhost:5175")
 public class SearchController {
 
     private final ProviderSearchService providerSearchService;

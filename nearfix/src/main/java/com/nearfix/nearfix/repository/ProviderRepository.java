@@ -16,26 +16,30 @@ public interface ProviderRepository extends JpaRepository<Provider,Long> {
      * Filters for verified, profile completed, and available providers
      * Returns providers within specified radius that offer the requested service
      */
-    @Query(value =
-            "SELECT DISTINCT p.* " +
-                    "FROM providers p " +
-                    "INNER JOIN provider_services ps ON p.id = ps.provider_id " +
-                    "WHERE p.verified = true " +
-                    "AND p.profile_completed = true " +
-                    "AND p.availability_status = 'AVAILABLE' " +
-                    "AND ps.service_id = :serviceId " +
-                    "AND ps.available = true " +
-                    "AND p.latitude IS NOT NULL " +
-                    "AND p.longitude IS NOT NULL " +
-                    "AND (6371 * acos(GREATEST(-1, LEAST(1, " +
-                    "cos(radians(:latitude)) * cos(radians(p.latitude)) * " +
-                    "cos(radians(p.longitude) - radians(:longitude)) + " +
-                    "sin(radians(:latitude)) * sin(radians(p.latitude)))))) <= :radiusKm " +
-                    "ORDER BY (6371 * acos(GREATEST(-1, LEAST(1, " +
-                    "cos(radians(:latitude)) * cos(radians(p.latitude)) * " +
-                    "cos(radians(p.longitude) - radians(:longitude)) + " +
-                    "sin(radians(:latitude)) * sin(radians(p.latitude)))))",
-            nativeQuery = true)
+    @Query(value = """
+    SELECT DISTINCT p.*,
+    (
+        6371 * acos(
+            GREATEST(-1, LEAST(1,
+                cos(radians(:latitude)) 
+                * cos(radians(p.latitude)) 
+                * cos(radians(p.longitude) - radians(:longitude)) 
+                + sin(radians(:latitude)) * sin(radians(p.latitude))
+            ))
+        )
+    ) AS distance
+    FROM providers p
+    INNER JOIN provider_services ps ON p.id = ps.provider_id
+    WHERE p.verified = true
+      AND p.profile_completed = true
+      AND p.availability_status = 'AVAILABLE'
+      AND ps.service_id = :serviceId
+      AND ps.available = true
+      AND p.latitude IS NOT NULL
+      AND p.longitude IS NOT NULL
+    HAVING distance <= :radiusKm
+    ORDER BY distance ASC
+    """, nativeQuery = true)
     List<Provider> findNearbyProviders(
             @Param("latitude") Double latitude,
             @Param("longitude") Double longitude,
