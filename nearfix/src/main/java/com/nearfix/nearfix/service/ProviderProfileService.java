@@ -2,8 +2,10 @@ package com.nearfix.nearfix.service;
 
 import com.nearfix.nearfix.dto.ProviderProfileDTO;
 import com.nearfix.nearfix.dto.UpdateProviderProfileRequest;
+import com.nearfix.nearfix.entity.AvailabilityStatus;
 import com.nearfix.nearfix.entity.Provider;
 import com.nearfix.nearfix.entity.User;
+import com.nearfix.nearfix.entity.VerificationStatus;
 import com.nearfix.nearfix.repository.ProviderRepository;
 import com.nearfix.nearfix.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -27,8 +29,21 @@ public class ProviderProfileService {
         User user = userRepository.findByPhoneNumber(phoneNumber)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+        // Get or create provider profile
         Provider provider = providerRepository.findByUserId(user.getId())
-                .orElseThrow(() -> new RuntimeException("Provider profile not found"));
+                .orElseGet(() -> {
+                    log.info("Provider profile not found for user {}. Creating new profile...", phoneNumber);
+                    Provider newProvider = new Provider();
+                    newProvider.setUser(user);
+                    newProvider.setAvailabilityStatus(AvailabilityStatus.OFFLINE);
+                    newProvider.setVerified(false);
+                    newProvider.setVerificationStatus(VerificationStatus.PENDING);
+                    newProvider.setProfileCompleted(false);
+                    newProvider.setExperienceYears(0); // Initialize to 0
+                    Provider saved = providerRepository.save(newProvider);
+                    log.info("New provider profile created with ID: {}", saved.getId());
+                    return saved;
+                });
 
         return convertToDTO(provider);
     }
@@ -40,8 +55,19 @@ public class ProviderProfileService {
         User user = userRepository.findByPhoneNumber(phoneNumber)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+        // Get or create provider profile
         Provider provider = providerRepository.findByUserId(user.getId())
-                .orElseThrow(() -> new RuntimeException("Provider profile not found"));
+                .orElseGet(() -> {
+                    log.info("Provider profile not found for user {}. Creating new profile...", phoneNumber);
+                    Provider newProvider = new Provider();
+                    newProvider.setUser(user);
+                    newProvider.setAvailabilityStatus(AvailabilityStatus.OFFLINE);
+                    newProvider.setVerified(false);
+                    newProvider.setVerificationStatus(VerificationStatus.PENDING);
+                    newProvider.setProfileCompleted(false);
+                    newProvider.setExperienceYears(0); // Initialize to 0
+                    return providerRepository.save(newProvider);
+                });
 
         // Update fields
         provider.setBusinessName(request.getBusinessName());
@@ -70,8 +96,19 @@ public class ProviderProfileService {
         User user = userRepository.findByPhoneNumber(phoneNumber)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+        // Get or create provider profile
         Provider provider = providerRepository.findByUserId(user.getId())
-                .orElseThrow(() -> new RuntimeException("Provider profile not found"));
+                .orElseGet(() -> {
+                    log.info("Provider profile not found for user {}. Creating new profile...", phoneNumber);
+                    Provider newProvider = new Provider();
+                    newProvider.setUser(user);
+                    newProvider.setAvailabilityStatus(AvailabilityStatus.OFFLINE);
+                    newProvider.setVerified(false);
+                    newProvider.setVerificationStatus(VerificationStatus.PENDING);
+                    newProvider.setProfileCompleted(false);
+                    newProvider.setExperienceYears(0); // Initialize to 0
+                    return providerRepository.save(newProvider);
+                });
 
         // Delete old photo if exists
         if (provider.getPhotoUrl() != null) {
@@ -98,8 +135,18 @@ public class ProviderProfileService {
         User user = userRepository.findByPhoneNumber(phoneNumber)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+        // Get or create provider profile
         Provider provider = providerRepository.findByUserId(user.getId())
-                .orElseThrow(() -> new RuntimeException("Provider profile not found"));
+                .orElseGet(() -> {
+                    log.info("Provider profile not found for user {}. Creating new profile...", phoneNumber);
+                    Provider newProvider = new Provider();
+                    newProvider.setUser(user);
+                    newProvider.setAvailabilityStatus(AvailabilityStatus.OFFLINE);
+                    newProvider.setVerified(false);
+                    newProvider.setVerificationStatus(VerificationStatus.PENDING);
+                    newProvider.setProfileCompleted(false);
+                    return providerRepository.save(newProvider);
+                });
 
         // Delete old document if exists
         if (provider.getAadharUrl() != null) {
