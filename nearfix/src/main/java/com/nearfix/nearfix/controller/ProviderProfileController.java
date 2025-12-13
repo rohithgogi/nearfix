@@ -1,6 +1,7 @@
 package com.nearfix.nearfix.controller;
 
 import com.nearfix.nearfix.dto.ProviderProfileDTO;
+import com.nearfix.nearfix.dto.UpdateAvailabilityRequest;
 import com.nearfix.nearfix.dto.UpdateProviderProfileRequest;
 import com.nearfix.nearfix.security.JwtTokenProvider;
 import com.nearfix.nearfix.service.ProviderProfileService;
@@ -46,6 +47,28 @@ public class ProviderProfileController {
             return ResponseEntity.ok(profile);
         } catch (Exception e) {
             log.error("Error updating profile: {}", e.getMessage());
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+
+    // ✅ NEW ENDPOINT: Update Availability Status
+    @PutMapping("/availability")
+    public ResponseEntity<ProviderProfileDTO> updateAvailability(
+            HttpServletRequest request,
+            @RequestBody UpdateAvailabilityRequest availabilityRequest) {
+        try {
+            String phoneNumber = getPhoneNumberFromToken(request);
+            log.info("Updating availability for provider: {} to {}",
+                    phoneNumber, availabilityRequest.getAvailabilityStatus());
+
+            ProviderProfileDTO profile = providerProfileService.updateAvailability(
+                    phoneNumber,
+                    availabilityRequest.getAvailabilityStatus()
+            );
+
+            return ResponseEntity.ok(profile);
+        } catch (Exception e) {
+            log.error("Error updating availability: {}", e.getMessage());
             throw new RuntimeException(e.getMessage());
         }
     }

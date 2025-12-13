@@ -89,6 +89,27 @@ public class ProviderProfileService {
         return convertToDTO(provider);
     }
 
+    // ✅ NEW METHOD: Update Availability Status
+    @Transactional
+    public ProviderProfileDTO updateAvailability(String phoneNumber, AvailabilityStatus status) {
+        log.info("Updating availability for provider: {} to {}", phoneNumber, status);
+
+        User user = userRepository.findByPhoneNumber(phoneNumber)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Provider provider = providerRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new RuntimeException("Provider profile not found"));
+
+        // Update availability
+        provider.setAvailabilityStatus(status);
+        provider = providerRepository.save(provider);
+
+        log.info("✅ Availability updated successfully: {} is now {}",
+                phoneNumber, status);
+
+        return convertToDTO(provider);
+    }
+
     @Transactional
     public ProviderProfileDTO uploadPhoto(String phoneNumber, MultipartFile file) {
         log.info("Uploading photo for provider: {}", phoneNumber);
