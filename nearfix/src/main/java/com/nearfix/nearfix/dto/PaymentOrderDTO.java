@@ -1,0 +1,22 @@
+package com.nearfix.nearfix.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class PaymentOrderDTO {
+    private String orderId;
+    private Integer amount;
+    private String currency;
+    private String keyId;
+    private Long bookingId;
+    private String customerName;
+    private String customerPhone;
+    private String description;
+
+}

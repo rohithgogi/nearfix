@@ -79,6 +79,43 @@ public class Booking {
     @Column(columnDefinition = "TEXT")
     private String cancellationReason;
 
+    @Column(name = "razorpay_order_id")
+    private String razorpayOrderId;
+
+    @Column(name = "razorpay_payment_id")
+    private String razorpayPaymentId;
+
+    @Column(name = "razorpay_signature")
+    private String razorpaySignature;
+
+    @Column(name = "paid_at")
+    private LocalDateTime paidAt;
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        if (status == null) {
+            status = BookingStatus.PENDING;
+        }
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
+
+    // Helper method to check if payment is completed
+    public boolean isPaid() {
+        return razorpayPaymentId != null && paidAt != null;
+    }
+
+    // Helper method to check if booking can be paid
+    public boolean canBePaid() {
+        return status == BookingStatus.COMPLETED
+                && razorpayPaymentId == null
+                && finalPrice != null;
+    }
+
     // Helper methods
     public boolean canBeCancelled() {
         return status == BookingStatus.PENDING || status == BookingStatus.ACCEPTED;
