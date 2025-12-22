@@ -19,7 +19,7 @@ import java.util.List;
 @RequestMapping("/api/reviews")
 @RequiredArgsConstructor
 @Slf4j
-@CrossOrigin(origins = "http://localhost:5175")
+@CrossOrigin(origins = "*")
 public class ReviewController {
 
     private final ReviewService reviewService;

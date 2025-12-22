@@ -18,7 +18,7 @@ import java.util.Map;
 @RequestMapping("/auth/otp")
 @RequiredArgsConstructor
 @Slf4j
-@CrossOrigin(origins = "http://localhost:5175") // Add this
+@CrossOrigin(origins = "*") // Add this
 public class OtpController {
     private final OtpService otpService;
     private final AuthService authService;

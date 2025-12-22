@@ -16,7 +16,7 @@ import java.io.IOException;
 @RequestMapping("/api/files")
 @RequiredArgsConstructor
 @Slf4j
-@CrossOrigin(origins = "http://localhost:5175")
+@CrossOrigin(origins = "*")
 public class FileController {
 
     private final FileStorageService fileStorageService;

@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/nearfix.iml" filepath="$PROJECT_DIR$/.idea/nearfix.iml" />
+      <module fileurl="file://$PROJECT_DIR$/nearfix/nearfix.iml" filepath="$PROJECT_DIR$/nearfix/nearfix.iml" />
     </modules>
   </component>
 </project>

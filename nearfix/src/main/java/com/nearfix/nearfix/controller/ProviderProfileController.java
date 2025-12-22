@@ -19,7 +19,7 @@ import java.util.Map;
 @RequestMapping("/api/provider/profile")
 @RequiredArgsConstructor
 @Slf4j
-@CrossOrigin(origins = "http://localhost:5175")
+@CrossOrigin(origins = "*")
 public class ProviderProfileController {
 
     private final ProviderProfileService providerProfileService;
