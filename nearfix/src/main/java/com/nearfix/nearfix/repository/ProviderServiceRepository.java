@@ -25,4 +25,6 @@ public interface ProviderServiceRepository extends JpaRepository<ProviderService
                                                     @Param("id") Long id);
 
     boolean existsByProviderIdAndServiceId(Long providerId, Long serviceId);
+
+    long countByAvailableTrue();
 }

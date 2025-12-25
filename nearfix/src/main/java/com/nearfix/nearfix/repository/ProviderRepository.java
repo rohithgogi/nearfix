@@ -1,9 +1,13 @@
 package com.nearfix.nearfix.repository;
 
 import com.nearfix.nearfix.entity.Provider;
+import com.nearfix.nearfix.entity.VerificationStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.security.core.parameters.P;
 
 import java.util.List;
 import java.util.Optional;
@@ -52,4 +56,10 @@ public interface ProviderRepository extends JpaRepository<Provider,Long> {
      */
     @Query("SELECT p FROM Provider p WHERE p.verified = true AND p.profileCompleted = true")
     List<Provider> findAllVerifiedProviders();
+
+    //for Admin stats
+    Long countByVerificationStatus(VerificationStatus status);
+    Long countByVerified(Boolean verified);
+    Page<Provider> findByVerificationStatusIn(List<VerificationStatus> statuses, Pageable pageable);
+    List<Provider> findTop5ByOrderByCreatedAtDesc();
 }
