@@ -12,5 +12,5 @@ public interface ServiceRepository extends JpaRepository<Service, Long> {
     List<Service> findByCategory(String category);
     List<Service> findByActiveTrueOrderByNameAsc();
 
-    Long countByAvailableTrue();
+    Long countByActiveTrue();
 }
