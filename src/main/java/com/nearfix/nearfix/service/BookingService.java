@@ -34,6 +34,7 @@ public class BookingService {
     public BookingDTO createBooking(String customerPhone, CreateBookingRequest request){
         log.info("Creating booking for customer: {}",customerPhone);
 
+        request.validate();
         //validate customer
         User customer=userRepository.findByPhoneNumber(customerPhone)
                 .orElseThrow(()-> new RuntimeException("Customer not found"));
@@ -192,6 +193,7 @@ public class BookingService {
     public BookingDTO completeBooking(String providerPhone, Long bookingId, CompleteBookingRequest request) {
         log.info("Provider {} completing booking {}", providerPhone, bookingId);
 
+        request.validate();
         Booking booking = getBookingForProvider(providerPhone, bookingId);
 
         if (!booking.canBeCompleted()) {

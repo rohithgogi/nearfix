@@ -32,3 +32,13 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Environment Variables (CRITICAL) ###
+.env
+.env.local
+.env.*.local
+*.env
+
+### Secrets ###
+application-secrets.properties
+secrets.yml

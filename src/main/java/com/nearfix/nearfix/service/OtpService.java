@@ -14,8 +14,23 @@ import java.util.Random;
 @Slf4j
 public class OtpService {
     private final OtpRepository otpRepository;
+    private final OtpRateLimiter rateLimiter;
 //    private final SnsService snsService;
      public void sendOtp(String phoneNumber){
+         if (!rateLimiter.canSendOtp(phoneNumber)) {
+             long cooldown = rateLimiter.getCooldownSeconds(phoneNumber);
+             int remaining = rateLimiter.getRemainingAttempts(phoneNumber);
+
+             if (cooldown > 0) {
+                 throw new RuntimeException(
+                         String.format("Please wait %d seconds before requesting another OTP", cooldown)
+                 );
+             } else {
+                 throw new RuntimeException(
+                         String.format("OTP limit exceeded. Try again later. (%d remaining today)", remaining)
+                 );
+             }
+         }
          String code=String.format("%04d", new Random().nextInt(10000));
 
          Otp otp=Otp.builder()

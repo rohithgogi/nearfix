@@ -4,6 +4,7 @@ import com.nearfix.nearfix.dto.PaymentOrderDTO;
 import com.nearfix.nearfix.dto.PaymentVerificationDTO;
 import com.nearfix.nearfix.entity.Booking;
 import com.nearfix.nearfix.entity.BookingStatus;
+import com.nearfix.nearfix.entity.PaymentStatus;
 import com.nearfix.nearfix.repository.BookingRepository;
 import com.razorpay.Order;
 import com.razorpay.RazorpayClient;
@@ -11,6 +12,7 @@ import com.razorpay.RazorpayException;
 import com.razorpay.Utils;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -25,6 +27,7 @@ import java.util.HexFormat;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class PaymentService {
 
     @Value("${razorpay.key-id}")
@@ -96,31 +99,47 @@ public class PaymentService {
     public boolean verifyAndUpdatePayment(Long bookingId, PaymentVerificationDTO verificationDTO){
         Booking booking=bookingRepository.findById(bookingId)
                 .orElseThrow(()->new RuntimeException("Booking not found"));
-        if(!booking.getRazorpayPaymentId().equals(verificationDTO.getOrderId())){
+
+        if(!booking.getRazorpayOrderId().equals(verificationDTO.getOrderId())){
             throw new RuntimeException("Order ID mismatch");
         }
 
-        if(booking.getRazorpayOrderId()!=null){
+        if(booking.getRazorpayPaymentId()!=null){
             throw new RuntimeException("Payment already processed");
         }
 
-        boolean isValid=verifySignature(verificationDTO.getOrderId(),
-                verificationDTO.getPaymentId(),
-                verificationDTO.getSignature());
-        if(!isValid){
-            throw new RuntimeException("Invalid payment signature");
+        // ✅ Use Razorpay SDK's built-in signature verification
+        try {
+            JSONObject options = new JSONObject();
+            options.put("razorpay_order_id", verificationDTO.getOrderId());
+            options.put("razorpay_payment_id", verificationDTO.getPaymentId());
+            options.put("razorpay_signature", verificationDTO.getSignature());
+
+            // This throws SignatureException if verification fails
+            boolean isValid = Utils.verifyPaymentSignature(options, keySecret);
+
+            if (!isValid) {
+                log.error("❌ Payment signature verification failed for booking {}", bookingId);
+                throw new RuntimeException("Invalid payment signature");
+            }
+
+            log.info("✅ Payment signature verified for booking {}", bookingId);
+
+        } catch (RazorpayException e) {
+            log.error("❌ Razorpay signature verification error: {}", e.getMessage());
+            throw new RuntimeException("Payment verification failed: " + e.getMessage());
         }
 
         // Update booking with payment details
         booking.setRazorpayPaymentId(verificationDTO.getPaymentId());
         booking.setRazorpaySignature(verificationDTO.getSignature());
         booking.setPaidAt(LocalDateTime.now());
+        booking.setPaymentStatus(PaymentStatus.PAID);
         bookingRepository.save(booking);
 
+        log.info("✅ Payment completed for booking {}: {}", bookingId, verificationDTO.getPaymentId());
         return true;
-
     }
-
     private Boolean verifySignature(String orderId, String paymentId, String signature){
         try{
             String payload=orderId+ "|" +paymentId;
