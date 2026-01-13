@@ -11,7 +11,7 @@ import java.time.format.DateTimeFormatter;
 @RequiredArgsConstructor
 @Slf4j
 public class NotificationService {
-    private final SnsService snsService;
+
     private static final DateTimeFormatter DATE_FORMAT=DateTimeFormatter.ofPattern("dd MMM yyy,hh:mm a");
 
     public void notifyBookingCreated(Booking booking){
@@ -25,7 +25,6 @@ public class NotificationService {
 
         try {
             // Uncomment when SMS is enabled
-            // snsService.sendSms(booking.getProvider().getUser().getPhoneNumber(), message);
         } catch (Exception e) {
             log.error("Failed to send booking created notification: {}", e.getMessage());
         }
@@ -42,7 +41,7 @@ public class NotificationService {
         log.info("📲 NOTIFICATION (Customer): {}", message);
 
         try {
-            // snsService.sendSms(booking.getCustomer().getPhoneNumber(), message);
+            // yy
         } catch (Exception e) {
             log.error("Failed to send booking accepted notification: {}", e.getMessage());
         }
@@ -59,7 +58,7 @@ public class NotificationService {
         log.info("📲 NOTIFICATION (Customer): {}", message);
 
         try {
-            // snsService.sendSms(booking.getCustomer().getPhoneNumber(), message);
+            // yy
         } catch (Exception e) {
             log.error("Failed to send booking rejected notification: {}", e.getMessage());
         }
@@ -75,7 +74,7 @@ public class NotificationService {
         log.info("📲 NOTIFICATION (Customer): {}", message);
 
         try {
-            // snsService.sendSms(booking.getCustomer().getPhoneNumber(), message);
+            // yy
         } catch (Exception e) {
             log.error("Failed to send booking completed notification: {}", e.getMessage());
         }
@@ -90,7 +89,7 @@ public class NotificationService {
                     booking.getScheduledDateTime().format(DATE_FORMAT)
             );
             log.info("📲 NOTIFICATION (Provider): {}", message);
-            // snsService.sendSms(booking.getProvider().getUser().getPhoneNumber(), message);
+            // yy
         } else {
             // Notify customer
             String message = String.format(
@@ -100,7 +99,7 @@ public class NotificationService {
                     booking.getCancellationReason() != null ? booking.getCancellationReason() : "Not specified"
             );
             log.info("📲 NOTIFICATION (Customer): {}", message);
-            // snsService.sendSms(booking.getCustomer().getPhoneNumber(), message);
+            // yy
         }
     }
 }

@@ -15,7 +15,7 @@ import java.util.Random;
 public class OtpService {
     private final OtpRepository otpRepository;
     private final OtpRateLimiter rateLimiter;
-//    private final SnsService snsService;
+
      public void sendOtp(String phoneNumber){
          if (!rateLimiter.canSendOtp(phoneNumber)) {
              long cooldown = rateLimiter.getCooldownSeconds(phoneNumber);
@@ -42,15 +42,7 @@ public class OtpService {
 
          otpRepository.save(otp);
          log.info("OTP generated for {}: {}", phoneNumber, code);
-         // Send OTP via SMS
-//         try {
-//             snsService.sendOtp(phoneNumber, code);
-//             log.info("OTP sent successfully to {}", phoneNumber);
-//         } catch (Exception e) {
-//             log.error("Failed to send OTP to {}: {}", phoneNumber, e.getMessage());
-//             // Note: We don't throw exception here so OTP is still saved in DB for testing
-//             // In production, you might want to throw exception and rollback
-//         }
+
      }
 
      public boolean verifyOtp(String phoneNumber,String otpCode){
