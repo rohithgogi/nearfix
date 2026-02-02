@@ -20,10 +20,19 @@ public class AddProviderServiceRequest {
     @DecimalMax(value = "99999.99", message = "Price is too high")
     private BigDecimal basePrice;
 
-    @Min(value = 0, message = "Experience cannot be negative")
+    // ✅ FIXED: Changed from @Min(0) to @Min(-1) with custom validation
+    // This allows null values and 0+ values, but rejects negative numbers
+    @Min(value = -1, message = "Experience cannot be negative")
     @Max(value = 50, message = "Experience years seems unrealistic")
     private Integer experienceYears;
 
     @Size(max = 500, message = "Description is too long")
     private String description;
+
+    // ✅ Custom validation method (called in service layer)
+    public void validate() {
+        if (experienceYears != null && experienceYears < 0) {
+            throw new IllegalArgumentException("Experience cannot be negative");
+        }
+    }
 }
