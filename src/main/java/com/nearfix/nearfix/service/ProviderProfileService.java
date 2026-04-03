@@ -10,6 +10,7 @@ import com.nearfix.nearfix.repository.ProviderRepository;
 import com.nearfix.nearfix.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -49,6 +50,8 @@ public class ProviderProfileService {
     }
 
     @Transactional
+    @CacheEvict(value = "providerDetail", key = "#result.id", condition = "#result != null")
+
     public ProviderProfileDTO updateProfile(String phoneNumber, UpdateProviderProfileRequest request) {
         log.info("Updating profile for provider: {}", phoneNumber);
 
@@ -111,6 +114,7 @@ public class ProviderProfileService {
     }
 
     @Transactional
+    @CacheEvict(value = "providerDetail", key = "#result.id", condition = "#result != null")
     public ProviderProfileDTO uploadPhoto(String phoneNumber, MultipartFile file) {
         log.info("Uploading photo for provider: {}", phoneNumber);
 
@@ -150,6 +154,7 @@ public class ProviderProfileService {
     }
 
     @Transactional
+    @CacheEvict(value = "providerDetail", key = "#result.id", condition = "#result != null")
     public ProviderProfileDTO uploadDocument(String phoneNumber, MultipartFile file) {
         log.info("Uploading document for provider: {}", phoneNumber);
 

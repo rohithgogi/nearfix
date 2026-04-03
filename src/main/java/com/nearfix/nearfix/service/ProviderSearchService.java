@@ -7,8 +7,10 @@ import com.nearfix.nearfix.entity.Provider;
 import com.nearfix.nearfix.entity.ProviderService;
 import com.nearfix.nearfix.repository.ProviderRepository;
 import com.nearfix.nearfix.repository.ProviderServiceRepository;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -25,6 +27,8 @@ public class ProviderSearchService {
     private final ProviderRepository providerRepository;
     private final ProviderServiceRepository providerServiceRepository;
 
+    @Cacheable(value = "providerSearch",
+            key = "#request.serviceId + '_' + T(Math).round(#request.latitude * 100) + '_' + T(Math).round(#request.longitude * 100) + '_' + #request.radiusKm")
     public List<ProviderSearchResultDTO> searchProviders(ProviderSearchRequest request){
         log.info("🔍 Searching providers - Service: {}, Location: ({}, {}), Radius: {} km",
                 request.getServiceId(), request.getLatitude(), request.getLongitude(), request.getRadiusKm());
@@ -97,7 +101,7 @@ public class ProviderSearchService {
             throw new RuntimeException("Failed to search providers: " + e.getMessage());
         }
     }
-
+    @Cacheable(value = "providerDetail", key = "#providerId")
     public ProviderDetailDTO getProviderDetail(Long providerId) {
         log.info("📋 Fetching provider detail for ID: {}", providerId);
 

@@ -1,136 +1,71 @@
 package com.nearfix.nearfix.service;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.time.Duration;
 
-/**
- * Rate limiter for OTP requests
- * Prevents SMS bombing and abuse
- */
 @Component
+@RequiredArgsConstructor
 @Slf4j
 public class OtpRateLimiter {
 
-    // Track OTP requests per phone number
-    private final Map<String, OtpAttemptTracker> attemptTrackers = new ConcurrentHashMap<>();
+    private final RedisTemplate<String, Object> redisTemplate;
 
+    private static final String COOLDOWN_PREFIX = "otp:cooldown:";
+    private static final String HOURLY_PREFIX = "otp:hourly:";
     private static final int MAX_ATTEMPTS_PER_HOUR = 3;
-    private static final int COOLDOWN_SECONDS = 60;  // 1 minute between OTPs
+    private static final int COOLDOWN_SECONDS = 60;
 
-    /**
-     * Check if OTP can be sent to this phone number
-     * @param phoneNumber Phone number
-     * @return true if allowed, false if rate limited
-     */
     public boolean canSendOtp(String phoneNumber) {
-        OtpAttemptTracker tracker = attemptTrackers.computeIfAbsent(
-                phoneNumber,
-                k -> new OtpAttemptTracker()
-        );
-
-        // Clean up old attempts (older than 1 hour)
-        tracker.cleanupOldAttempts();
-
-        // Check cooldown period
-        if (tracker.isInCooldown()) {
-            long secondsRemaining = tracker.getCooldownSecondsRemaining();
-            log.warn("⚠️ OTP cooldown active for {}: {} seconds remaining",
-                    phoneNumber, secondsRemaining);
+        // Check cooldown
+        if (Boolean.TRUE.equals(redisTemplate.hasKey(COOLDOWN_PREFIX + phoneNumber))) {
+            Long ttl = redisTemplate.getExpire(COOLDOWN_PREFIX + phoneNumber);
+            log.warn("OTP cooldown active for {}: {} seconds remaining", phoneNumber, ttl);
             return false;
         }
 
         // Check hourly limit
-        if (tracker.getAttemptsInLastHour() >= MAX_ATTEMPTS_PER_HOUR) {
-            log.warn("⚠️ OTP rate limit exceeded for {}: {} attempts in last hour",
-                    phoneNumber, tracker.getAttemptsInLastHour());
+        String hourlyKey = HOURLY_PREFIX + phoneNumber;
+        Object countObj = redisTemplate.opsForValue().get(hourlyKey);
+        int count = countObj != null ? Integer.parseInt(countObj.toString()) : 0;
+
+        if (count >= MAX_ATTEMPTS_PER_HOUR) {
+            log.warn("OTP rate limit exceeded for {}", phoneNumber);
             return false;
         }
 
         // Record attempt
-        tracker.recordAttempt();
-        log.info("✅ OTP allowed for {}: {}/{} attempts used",
-                phoneNumber, tracker.getAttemptsInLastHour(), MAX_ATTEMPTS_PER_HOUR);
+        if (count == 0) {
+            redisTemplate.opsForValue().set(hourlyKey, "1", Duration.ofHours(1));
+        } else {
+            redisTemplate.opsForValue().increment(hourlyKey);
+        }
 
+        // Set cooldown
+        redisTemplate.opsForValue().set(
+                COOLDOWN_PREFIX + phoneNumber, "1", Duration.ofSeconds(COOLDOWN_SECONDS));
+
+        log.info("OTP allowed for {}: {}/{} attempts used", phoneNumber, count + 1, MAX_ATTEMPTS_PER_HOUR);
         return true;
     }
 
-    /**
-     * Get remaining time before next OTP can be sent
-     * @param phoneNumber Phone number
-     * @return seconds remaining, or 0 if can send now
-     */
     public long getCooldownSeconds(String phoneNumber) {
-        OtpAttemptTracker tracker = attemptTrackers.get(phoneNumber);
-        if (tracker == null) {
-            return 0;
-        }
-        return tracker.isInCooldown() ? tracker.getCooldownSecondsRemaining() : 0;
+        Long ttl = redisTemplate.getExpire(COOLDOWN_PREFIX + phoneNumber);
+        return ttl != null && ttl > 0 ? ttl : 0;
     }
 
-    /**
-     * Get remaining attempts in current hour
-     * @param phoneNumber Phone number
-     * @return remaining attempts
-     */
     public int getRemainingAttempts(String phoneNumber) {
-        OtpAttemptTracker tracker = attemptTrackers.get(phoneNumber);
-        if (tracker == null) {
-            return MAX_ATTEMPTS_PER_HOUR;
-        }
-        tracker.cleanupOldAttempts();
-        return Math.max(0, MAX_ATTEMPTS_PER_HOUR - tracker.getAttemptsInLastHour());
+        Object countObj = redisTemplate.opsForValue().get(HOURLY_PREFIX + phoneNumber);
+        int count = countObj != null ? Integer.parseInt(countObj.toString()) : 0;
+        return Math.max(0, MAX_ATTEMPTS_PER_HOUR - count);
     }
 
-    /**
-     * Clear rate limit for a phone number (admin override)
-     * @param phoneNumber Phone number
-     */
     public void clearRateLimit(String phoneNumber) {
-        attemptTrackers.remove(phoneNumber);
-        log.info("✅ Rate limit cleared for {}", phoneNumber);
-    }
-
-    /**
-     * Inner class to track OTP attempts for a phone number
-     */
-    private static class OtpAttemptTracker {
-        private final Map<LocalDateTime, Boolean> attempts = new ConcurrentHashMap<>();
-        private LocalDateTime lastAttempt;
-
-        public void recordAttempt() {
-            LocalDateTime now = LocalDateTime.now();
-            attempts.put(now, true);
-            lastAttempt = now;
-        }
-
-        public void cleanupOldAttempts() {
-            LocalDateTime oneHourAgo = LocalDateTime.now().minusHours(1);
-            attempts.keySet().removeIf(timestamp -> timestamp.isBefore(oneHourAgo));
-        }
-
-        public int getAttemptsInLastHour() {
-            cleanupOldAttempts();
-            return attempts.size();
-        }
-
-        public boolean isInCooldown() {
-            if (lastAttempt == null) {
-                return false;
-            }
-            LocalDateTime cooldownEnd = lastAttempt.plusSeconds(COOLDOWN_SECONDS);
-            return LocalDateTime.now().isBefore(cooldownEnd);
-        }
-
-        public long getCooldownSecondsRemaining() {
-            if (!isInCooldown()) {
-                return 0;
-            }
-            LocalDateTime cooldownEnd = lastAttempt.plusSeconds(COOLDOWN_SECONDS);
-            return java.time.Duration.between(LocalDateTime.now(), cooldownEnd).getSeconds();
-        }
+        redisTemplate.delete(COOLDOWN_PREFIX + phoneNumber);
+        redisTemplate.delete(HOURLY_PREFIX + phoneNumber);
+        log.info("Rate limit cleared for {}", phoneNumber);
     }
 }
