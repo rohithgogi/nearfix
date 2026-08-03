@@ -16,9 +16,10 @@ public interface ProviderRepository extends JpaRepository<Provider,Long> {
     Optional<Provider> findByUserId(Long userId);
 
     /**
-     * Find nearby providers using Haversine formula
-     * Filters for verified, profile completed, and available providers
-     * Returns providers within specified radius that offer the requested service
+     * Find providers using Haversine formula for distance, ordered by distance ascending.
+     * Filters for verified, profile completed, and available providers.
+     * No radius cutoff — returns every eligible provider so the caller can filter/sort
+     * (by distance, price, rating, etc.) rather than silently excluding far-away matches.
      */
     @Query(value = """
     SELECT DISTINCT p.*,
@@ -41,13 +42,11 @@ public interface ProviderRepository extends JpaRepository<Provider,Long> {
       AND ps.available = true
       AND p.latitude IS NOT NULL
       AND p.longitude IS NOT NULL
-    HAVING distance <= :radiusKm
     ORDER BY distance ASC
     """, nativeQuery = true)
-    List<Provider> findNearbyProviders(
+    List<Provider> findProvidersByService(
             @Param("latitude") Double latitude,
             @Param("longitude") Double longitude,
-            @Param("radiusKm") Double radiusKm,
             @Param("serviceId") Long serviceId
     );
 

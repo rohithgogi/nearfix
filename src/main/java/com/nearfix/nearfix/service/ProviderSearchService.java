@@ -28,10 +28,10 @@ public class ProviderSearchService {
     private final ProviderServiceRepository providerServiceRepository;
 
     @Cacheable(value = "providerSearch",
-            key = "#request.serviceId + '_' + T(Math).round(#request.latitude * 100) + '_' + T(Math).round(#request.longitude * 100) + '_' + #request.radiusKm")
+            key = "#request.serviceId + '_' + T(Math).round(#request.latitude * 100) + '_' + T(Math).round(#request.longitude * 100)")
     public List<ProviderSearchResultDTO> searchProviders(ProviderSearchRequest request){
-        log.info("🔍 Searching providers - Service: {}, Location: ({}, {}), Radius: {} km",
-                request.getServiceId(), request.getLatitude(), request.getLongitude(), request.getRadiusKm());
+        log.info("🔍 Searching providers - Service: {}, Location: ({}, {})",
+                request.getServiceId(), request.getLatitude(), request.getLongitude());
 
         // Validate inputs
         if (request.getLatitude() == null || request.getLongitude() == null) {
@@ -45,14 +45,13 @@ public class ProviderSearchService {
         }
 
         try {
-            List<Provider> nearbyProviders = providerRepository.findNearbyProviders(
+            List<Provider> nearbyProviders = providerRepository.findProvidersByService(
                     request.getLatitude(),
                     request.getLongitude(),
-                    request.getRadiusKm(),
                     request.getServiceId()
             );
 
-            log.info("✅ Found {} nearby providers", nearbyProviders.size());
+            log.info("✅ Found {} providers offering this service", nearbyProviders.size());
 
             if (nearbyProviders.isEmpty()) {
                 log.warn("⚠️ No providers found. Checking total verified providers...");

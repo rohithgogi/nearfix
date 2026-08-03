@@ -25,10 +25,6 @@ public class ProviderSearchRequest {
     @DecimalMax(value = "180.0")
     private Double longitude;
 
-    @DecimalMin(value = "1.0", message = "Radius must be at least 1 km")
-    @DecimalMax(value = "50.0", message = "Radius cannot exceed 50 km")
-    private Double radiusKm = 10.0; // Default 10 km
-
     // Filters
     private BigDecimal minPrice;
     private BigDecimal maxPrice;
