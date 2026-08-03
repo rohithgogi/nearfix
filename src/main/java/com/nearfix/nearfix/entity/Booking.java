@@ -9,6 +9,8 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "bookings", indexes = {
@@ -51,6 +53,22 @@ public class Booking {
 
     @Column(columnDefinition = "TEXT")
     private String description;
+
+    // Photo evidence of the problem - lets the provider see before they arrive
+    @ElementCollection
+    @CollectionTable(name = "booking_photos", joinColumns = @JoinColumn(name = "booking_id"))
+    @Column(name = "photo_url", length = 500)
+    private List<String> photoUrls = new ArrayList<>();
+
+    // Quick-tap issue tags, e.g. "No power", "Sparking", "Leaking" - static list per service on the frontend for now
+    @ElementCollection
+    @CollectionTable(name = "booking_issue_tags", joinColumns = @JoinColumn(name = "booking_id"))
+    @Column(name = "tag", length = 100)
+    private List<String> issueTags = new ArrayList<>();
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20, nullable = false)
+    private UrgencyLevel urgency = UrgencyLevel.MEDIUM;
 
     @Enumerated(EnumType.STRING)
     @Column(length = 20, nullable = false)

@@ -2,6 +2,7 @@ package com.nearfix.nearfix.dto;
 
 import com.nearfix.nearfix.entity.BookingStatus;
 import com.nearfix.nearfix.entity.PaymentStatus;
+import com.nearfix.nearfix.entity.UrgencyLevel;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -10,6 +11,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 // Request to create booking
 @Data
@@ -47,6 +49,14 @@ public class CreateBookingRequest {
     @DecimalMin(value = "0.01", message = "Quoted price must be positive if provided")
     @DecimalMax(value = "99999.99", message = "Quoted price is too high")
     private BigDecimal quotedPrice; // Optional, for reference
+
+    @Size(max = 3, message = "Maximum 3 photos allowed")
+    private List<String> photoUrls; // Optional, URLs returned from /api/bookings/attachments
+
+    @Size(max = 10, message = "Maximum 10 issue tags allowed")
+    private List<String> issueTags; // Optional, quick-tap tags e.g. "No power", "Leaking"
+
+    private UrgencyLevel urgency; // Optional, defaults to MEDIUM if not provided
 
     /**
      * Custom validation logic

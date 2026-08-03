@@ -2,10 +2,12 @@ package com.nearfix.nearfix.dto;
 
 import com.nearfix.nearfix.entity.BookingStatus;
 import com.nearfix.nearfix.entity.PaymentStatus;
+import com.nearfix.nearfix.entity.UrgencyLevel;
 import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @NoArgsConstructor
 @Data
@@ -35,6 +37,9 @@ public class BookingDTO {
     private BigDecimal customerLat;
     private BigDecimal customerLng;
     private String description;
+    private List<String> photoUrls;
+    private List<String> issueTags;
+    private UrgencyLevel urgency;
 
     // Status and pricing
     private BookingStatus status;

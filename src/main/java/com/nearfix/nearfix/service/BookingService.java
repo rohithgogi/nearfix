@@ -72,6 +72,15 @@ public class BookingService {
         booking.setStatus(BookingStatus.PENDING);
         booking.setPaymentStatus(PaymentStatus.PENDING);
 
+        // Problem intake - cap photos server-side too, don't just trust the DTO validation
+        if (request.getPhotoUrls() != null) {
+            booking.setPhotoUrls(request.getPhotoUrls().stream().limit(3).collect(Collectors.toList()));
+        }
+        if (request.getIssueTags() != null) {
+            booking.setIssueTags(request.getIssueTags());
+        }
+        booking.setUrgency(request.getUrgency() != null ? request.getUrgency() : UrgencyLevel.MEDIUM);
+
         booking = bookingRepository.save(booking);
         log.info("✅ Booking created successfully with ID: {}", booking.getId());
 
@@ -284,6 +293,9 @@ public class BookingService {
                 .customerLat(booking.getCustomerLat())
                 .customerLng(booking.getCustomerLng())
                 .description(booking.getDescription())
+                .photoUrls(booking.getPhotoUrls())
+                .issueTags(booking.getIssueTags())
+                .urgency(booking.getUrgency())
                 .status(booking.getStatus())
                 .paymentStatus(booking.getPaymentStatus())
                 .quotedPrice(booking.getQuotedPrice())
@@ -299,5 +311,3 @@ public class BookingService {
                 .build();
     }
 }
-
-

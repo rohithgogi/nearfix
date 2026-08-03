@@ -3,14 +3,17 @@ package com.nearfix.nearfix.controller;
 import com.nearfix.nearfix.dto.*;
 import com.nearfix.nearfix.security.JwtTokenProvider;
 import com.nearfix.nearfix.service.BookingService;
+import com.nearfix.nearfix.service.FileStorageService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/bookings")
@@ -21,6 +24,26 @@ public class BookingController {
 
     private final BookingService bookingService;
     private final JwtTokenProvider jwtTokenProvider;
+    private final FileStorageService fileStorageService;
+
+    // Upload a problem photo before the booking exists yet.
+    // Frontend calls this per photo, collects the returned URLs, then sends them
+    // in CreateBookingRequest.photoUrls when the booking is actually submitted.
+    @PostMapping("/attachments")
+    public ResponseEntity<Map<String, String>> uploadAttachment(
+            HttpServletRequest request,
+            @RequestParam("file") MultipartFile file) {
+        try {
+            // Just confirms the caller is an authenticated customer (route is already
+            // restricted to ROLE_CUSTOMER by /api/bookings/** in SecurityConfig)
+            getPhoneNumberFromToken(request);
+            String url = fileStorageService.storeFile(file, "booking-attachments");
+            return ResponseEntity.ok(Map.of("url", url));
+        } catch (Exception e) {
+            log.error("Error uploading booking attachment: {}", e.getMessage());
+            throw new RuntimeException(e.getMessage());
+        }
+    }
 
     // Customer endpoints
     @PostMapping
