@@ -53,7 +53,20 @@ public class SecurityConfig {
                         // 🔐 PROTECTED ENDPOINTS (Require Auth)
                         // ========================================
 
-                        // Bookings - CUSTOMER only
+                        // Bookings - PROVIDER endpoints (must come before the broader
+                        // "/api/bookings/**" customer rule below, since Spring Security
+                        // uses first-match-wins for authorizeHttpRequests)
+                        .requestMatchers(HttpMethod.GET, "/api/bookings/provider").hasRole("PROVIDER")
+                        .requestMatchers(HttpMethod.PUT, "/api/bookings/*/accept").hasRole("PROVIDER")
+                        .requestMatchers(HttpMethod.PUT, "/api/bookings/*/reject").hasRole("PROVIDER")
+                        .requestMatchers(HttpMethod.PUT, "/api/bookings/*/complete").hasRole("PROVIDER")
+
+                        // Bookings - shared CUSTOMER/PROVIDER endpoints (cancel and get-by-id
+                        // are used by both roles; service layer enforces per-booking access)
+                        .requestMatchers(HttpMethod.PUT, "/api/bookings/*/cancel").hasAnyRole("CUSTOMER", "PROVIDER")
+                        .requestMatchers(HttpMethod.GET, "/api/bookings/{id:[0-9]+}").hasAnyRole("CUSTOMER", "PROVIDER")
+
+                        // Bookings - CUSTOMER only (everything else, e.g. create, list own, attachments)
                         .requestMatchers("/api/bookings/**").hasRole("CUSTOMER")
 
                         // Payments - CUSTOMER only

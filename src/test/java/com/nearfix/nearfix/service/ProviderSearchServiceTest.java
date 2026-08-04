@@ -87,12 +87,11 @@ class ProviderSearchServiceTest {
         request.setServiceId(11L);
         request.setLatitude(28.60);
         request.setLongitude(77.20);
-        request.setRadiusKm(20.0);
         request.setMinRating(4.6);
         request.setSortBy("price");
         request.setSortOrder("desc");
 
-        when(providerRepository.findNearbyProviders(28.60, 77.20, 20.0, 11L))
+        when(providerRepository.findProvidersByService(28.60, 77.20, 11L))
                 .thenReturn(List.of(providerA, providerB));
         when(providerServiceRepository.findByProviderIdAndAvailableTrue(providerA.getId()))
                 .thenReturn(List.of(providerAService));
@@ -111,7 +110,6 @@ class ProviderSearchServiceTest {
         ProviderSearchRequest request = new ProviderSearchRequest();
         request.setLatitude(28.60);
         request.setLongitude(77.20);
-        request.setRadiusKm(10.0);
 
         RuntimeException ex = assertThrows(
                 RuntimeException.class,
