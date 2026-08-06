@@ -19,6 +19,7 @@ public class OtpService {
     private final OtpRepository otpRepository;
     private final OtpRateLimiter rateLimiter;
     private final RedisTemplate<String, Object> redisTemplate;
+    private final SmsService smsService;
 
     private static final String OTP_PREFIX = "otp:";
     private static final Duration OTP_TTL = Duration.ofMinutes(5);
@@ -42,6 +43,12 @@ public class OtpService {
         redisTemplate.opsForValue().set(OTP_PREFIX + phoneNumber, code, OTP_TTL);
 
         log.info("OTP generated for {}: {}", phoneNumber, code);
+
+        try {
+            smsService.sendOtp(phoneNumber, code);
+        } catch (Exception e) {
+            log.error("Failed to send OTP SMS to {}: {}", phoneNumber, e.getMessage());
+        }
     }
 
     public boolean verifyOtp(String phoneNumber, String otpCode) {

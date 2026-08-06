@@ -14,6 +14,8 @@ public class NotificationService {
 
     private static final DateTimeFormatter DATE_FORMAT=DateTimeFormatter.ofPattern("dd MMM yyy,hh:mm a");
 
+    private final SmsService smsService;
+
     public void notifyBookingCreated(Booking booking){
         String message = String.format(
                 "New booking request #%d from customer. Service: %s on %s. Check NearFix app to accept/reject.",
@@ -24,7 +26,7 @@ public class NotificationService {
         log.info("📲 NOTIFICATION (Provider): {}", message);
 
         try {
-            // Uncomment when SMS is enabled
+            smsService.sendSms(booking.getProvider().getUser().getPhoneNumber(), message);
         } catch (Exception e) {
             log.error("Failed to send booking created notification: {}", e.getMessage());
         }
@@ -41,7 +43,7 @@ public class NotificationService {
         log.info("📲 NOTIFICATION (Customer): {}", message);
 
         try {
-            // yy
+            smsService.sendSms(booking.getCustomer().getPhoneNumber(), message);
         } catch (Exception e) {
             log.error("Failed to send booking accepted notification: {}", e.getMessage());
         }
@@ -58,7 +60,7 @@ public class NotificationService {
         log.info("📲 NOTIFICATION (Customer): {}", message);
 
         try {
-            // yy
+            smsService.sendSms(booking.getCustomer().getPhoneNumber(), message);
         } catch (Exception e) {
             log.error("Failed to send booking rejected notification: {}", e.getMessage());
         }
@@ -74,7 +76,7 @@ public class NotificationService {
         log.info("📲 NOTIFICATION (Customer): {}", message);
 
         try {
-            // yy
+            smsService.sendSms(booking.getCustomer().getPhoneNumber(), message);
         } catch (Exception e) {
             log.error("Failed to send booking completed notification: {}", e.getMessage());
         }
@@ -89,7 +91,11 @@ public class NotificationService {
                     booking.getScheduledDateTime().format(DATE_FORMAT)
             );
             log.info("📲 NOTIFICATION (Provider): {}", message);
-            // yy
+            try {
+                smsService.sendSms(booking.getProvider().getUser().getPhoneNumber(), message);
+            } catch (Exception e) {
+                log.error("Failed to send booking cancelled notification: {}", e.getMessage());
+            }
         } else {
             // Notify customer
             String message = String.format(
@@ -99,7 +105,11 @@ public class NotificationService {
                     booking.getCancellationReason() != null ? booking.getCancellationReason() : "Not specified"
             );
             log.info("📲 NOTIFICATION (Customer): {}", message);
-            // yy
+            try {
+                smsService.sendSms(booking.getCustomer().getPhoneNumber(), message);
+            } catch (Exception e) {
+                log.error("Failed to send booking cancelled notification: {}", e.getMessage());
+            }
         }
     }
 }

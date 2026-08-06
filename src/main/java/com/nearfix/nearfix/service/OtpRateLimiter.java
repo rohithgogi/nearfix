@@ -2,7 +2,7 @@ package com.nearfix.nearfix.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
@@ -12,7 +12,12 @@ import java.time.Duration;
 @Slf4j
 public class OtpRateLimiter {
 
-    private final RedisTemplate<String, Object> redisTemplate;
+    // Uses StringRedisTemplate (plain string serialization) rather than the app's
+    // main RedisTemplate<String, Object>, which serializes values as JSON. A raw
+    // Redis INCR command requires the stored value to literally be a numeric string —
+    // JSON-wrapped values ("\"1\"" or similar) make INCR fail with
+    // "ERR value is not an integer or out of range".
+    private final StringRedisTemplate redisTemplate;
 
     private static final String COOLDOWN_PREFIX = "otp:cooldown:";
     private static final String HOURLY_PREFIX = "otp:hourly:";
